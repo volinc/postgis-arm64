@@ -46,8 +46,14 @@ RUN set -ex \
 RUN set -eux \
     && cd /usr/src \
     && git clone --depth 1 --branch ${POSTGIS_VERSION} https://github.com/postgis/postgis.git \
-    && cd postgis \
-    && ./autogen.sh \
+    && cd postgis
+
+# Run autogen
+RUN cd /usr/src/postgis \
+    && ./autogen.sh
+
+# Configure PostGIS
+RUN cd /usr/src/postgis \
     && ./configure \
         --with-pgconfig=/usr/bin/pg_config \
         --with-gdalconfig=/usr/bin/gdal-config \
@@ -55,11 +61,18 @@ RUN set -eux \
         --with-projdir=/usr \
         --with-protobufdir=/usr \
         --with-jsondir=/usr \
-        || (cat config.log && exit 1) \
-    && make -j1 \
-    && make install \
-    && cd / \
-    && rm -rf /usr/src/postgis
+    || (echo "Configure failed, showing config.log:" && cat config.log && exit 1)
+
+# Build PostGIS
+RUN cd /usr/src/postgis \
+    && (make -j1 2>&1 | tee /tmp/build.log) || (echo "=== Make failed, showing last 100 lines ===" && tail -100 /tmp/build.log && echo "=== End of error log ===" && exit 1)
+
+# Install PostGIS
+RUN cd /usr/src/postgis \
+    && make install
+
+# Clean up source
+RUN rm -rf /usr/src/postgis
 
 # Clean up build dependencies
 RUN set -ex \
