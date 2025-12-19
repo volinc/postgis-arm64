@@ -43,7 +43,7 @@ RUN set -ex \
         pkgconfig
 
 # Build PostGIS from source
-RUN set -ex \
+RUN set -eux \
     && cd /usr/src \
     && git clone --depth 1 --branch ${POSTGIS_VERSION} https://github.com/postgis/postgis.git \
     && cd postgis \
@@ -55,7 +55,8 @@ RUN set -ex \
         --with-projdir=/usr \
         --with-protobufdir=/usr \
         --with-jsondir=/usr \
-    && make -j2 \
+        || (cat config.log && exit 1) \
+    && make -j1 \
     && make install \
     && cd / \
     && rm -rf /usr/src/postgis
