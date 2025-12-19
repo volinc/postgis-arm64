@@ -101,7 +101,7 @@ docker buildx build --platform linux/arm64 \
 
 ### Automatic build via GitHub Actions
 
-When pushing to the `main` branch or creating a tag, the image is automatically built and published to GitHub Container Registry via GitHub Actions.
+When pushing to the `release` branch or creating a tag, the image is automatically built and published to GitHub Container Registry via GitHub Actions.
 
 ## Tags
 
