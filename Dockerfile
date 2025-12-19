@@ -1,11 +1,22 @@
-FROM postgres:18-alpine
+FROM --platform=linux/arm64 postgres:18-alpine
 
 LABEL maintainer="PostGIS Project - ARM64 Build"
 
-ENV POSTGIS_VERSION=3.6
+ENV POSTGIS_VERSION=3.6.1
 ENV POSTGIS_MAJOR=3
 
-# Install PostGIS dependencies and PostGIS itself
+# Install runtime dependencies first
+RUN set -ex \
+    && apk add --no-cache \
+        gdal \
+        geos \
+        proj \
+        protobuf-c \
+        json-c \
+        libxml2 \
+        pcre2
+
+# Install build dependencies
 RUN set -ex \
     && apk add --no-cache --virtual .fetch-deps \
         ca-certificates \
@@ -23,19 +34,16 @@ RUN set -ex \
         pcre2-dev \
         perl \
         g++ \
+        gcc \
         make \
         cmake \
         autoconf \
         automake \
         libtool \
-    && apk add --no-cache \
-        gdal \
-        geos \
-        proj \
-        protobuf-c \
-        json-c \
-        libxml2 \
-        pcre2 \
+        pkgconfig
+
+# Build PostGIS from source
+RUN set -ex \
     && cd /usr/src \
     && git clone --depth 1 --branch ${POSTGIS_VERSION} https://github.com/postgis/postgis.git \
     && cd postgis \
@@ -47,10 +55,13 @@ RUN set -ex \
         --with-projdir=/usr \
         --with-protobufdir=/usr \
         --with-jsondir=/usr \
-    && make -j$(nproc) \
+    && make -j2 \
     && make install \
     && cd / \
-    && rm -rf /usr/src/postgis \
+    && rm -rf /usr/src/postgis
+
+# Clean up build dependencies
+RUN set -ex \
     && apk del .fetch-deps .build-deps \
     && rm -rf /var/cache/apk/*
 

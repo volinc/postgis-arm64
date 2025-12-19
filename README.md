@@ -32,6 +32,17 @@ SELECT PostGIS_Version();
 
 ## Building the image
 
+### Prerequisites
+
+The build script uses Docker's default buildx builder which already supports ARM64. If you're building on a non-ARM64 machine, QEMU emulation should be automatically handled by Docker Desktop.
+
+If you encounter issues, you can manually set up QEMU:
+
+```bash
+# Set up QEMU for ARM64 emulation (if building on non-ARM64 machine)
+docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
+```
+
 ### Using scripts (recommended)
 
 1. Build the image:
@@ -39,6 +50,14 @@ SELECT PostGIS_Version();
 ```bash
 ./build.sh
 ```
+
+If you encounter architecture-related errors, try building without cache first:
+
+```bash
+./build.sh --no-cache
+```
+
+The script automatically uses the default buildx builder which supports ARM64.
 
 2. Publish to GitHub Container Registry:
 
@@ -91,6 +110,10 @@ When pushing to the `main` branch or creating a tag, the image is automatically 
 ## Compatibility
 
 This image is fully compatible with the official `postgis/postgis:18-3.6-alpine` image and can be used as a replacement for ARM64 platforms.
+
+## Troubleshooting
+
+If you encounter build errors, especially related to QEMU emulation, see [TROUBLESHOOTING.md](TROUBLESHOOTING.md) for solutions.
 
 ## License
 
